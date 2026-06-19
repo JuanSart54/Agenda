@@ -1,0 +1,34 @@
+Options -Indexes
+DirectoryIndex index.html
+AddType application/manifest+json .webmanifest
+
+RewriteEngine On
+RedirectMatch 404 /\.git
+RewriteCond %{HTTPS} !=on [OR]
+RewriteCond %{HTTP_HOST} ^www\.negotecnica\.net$ [NC]
+RewriteRule ^ https://negotecnica.net%{REQUEST_URI} [L,R=301]
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=(self)"
+</IfModule>
+
+<FilesMatch "^(\.git|\.env|.*\.docx|.*\.md)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 hour"
+  ExpiresByType application/javascript "access plus 1 hour"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType application/manifest+json "access plus 1 hour"
+</IfModule>
+
+<FilesMatch "^(index\.html|sw\.js|manifest\.webmanifest|config\.js)$">
+  <IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+  </IfModule>
+</FilesMatch>
