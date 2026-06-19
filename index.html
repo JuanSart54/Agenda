@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#176f68">
+  <title>TRACKION AGENDA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=63">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=63">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">TRACKION AGENDA</p>
+        <h1>Control personal y operativo</h1>
+      </div>
+      <div class="top-actions">
+        <span class="sync-pill" id="syncStatus">Local</span>
+        <button class="ghost-button hidden" id="openAuthButton" type="button">Entrar</button>
+        <button class="ghost-button hidden" id="signOutButton" type="button">Salir</button>
+        <button class="ghost-button badge-button hidden" id="inboxButton" type="button"><span class="nav-badge" id="inboxBadge">0</span>Invitaciones</button>
+        <button class="ghost-button hidden" id="installButton" type="button">Instalar app</button>
+        <button class="ghost-button badge-button" id="alarmsButton" type="button"><span class="nav-badge" id="alarmsBadge">0</span>Alarmas</button>
+        <button class="ghost-button badge-button" id="galleryButton" type="button"><span class="nav-badge" id="photosBadge">0</span>Fotos</button>
+        <button class="ghost-button" id="configButton" type="button">CONFIG</button>
+        <button class="ghost-button" id="seedButton" type="button">Datos ejemplo</button>
+        <button class="primary-button" id="newTaskButton" type="button">Nueva tarea</button>
+      </div>
+    </header>
+
+    <section class="metrics" aria-label="Estadisticas">
+      <button class="metric-card" type="button" data-summary-view="all"><span id="metricTotal">0</span><p>Tareas</p></button>
+      <button class="metric-card" type="button" data-summary-view="pending"><span id="metricPending">0</span><p>Pendientes</p></button>
+      <button class="metric-card" type="button" data-summary-view="done"><span id="metricDone">0</span><p>Terminadas</p></button>
+      <button class="metric-card" type="button" data-summary-view="overdue"><span id="metricOverdue">0</span><p>Vencidas</p></button>
+      <button class="metric-card" type="button" data-summary-view="workorders"><span id="metricWorkorders">0</span><p>Ordenes recibidas</p></button>
+      <div class="metric-card readonly"><span id="metricProgress">0%</span><p>Completado</p></div>
+      <button class="metric-card" type="button" data-summary-view="subtasks"><span id="metricSubtasks">0</span><p>Subtareas</p></button>
+      <button class="metric-card" type="button" data-summary-view="subtasks-pending"><span id="metricSubtasksPending">0</span><p>Pendientes</p></button>
+      <button class="metric-card" type="button" data-summary-view="subtasks-done"><span id="metricSubtasksDone">0</span><p>Terminadas</p></button>
+      <button class="metric-card" type="button" data-summary-view="subtasks-overdue"><span id="metricSubtasksOverdue">0</span><p>Vencidas</p></button>
+      <div class="metric-card readonly"><span id="metricSubtasksProgress">0%</span><p>Completado</p></div>
+      <button class="metric-card" type="button" data-summary-view="guests"><span id="metricGuests">0</span><p>Invitados</p></button>
+    </section>
+
+    <section class="workspace">
+      <aside class="filters-panel">
+        <div class="panel-title">
+          <h2>Filtros</h2>
+          <button class="small-button" id="resetFiltersButton" type="button">Limpiar</button>
+        </div>
+
+        <label>
+          Buscar
+          <input id="searchInput" type="search" placeholder="Titulo, texto, agente o tag">
+        </label>
+
+        <label>
+          Estado
+          <select id="statusFilter">
+            <option value="pending">Pendientes por defecto</option>
+            <option value="all">Todas</option>
+            <option value="done">Terminadas</option>
+            <option value="paused">En pausa</option>
+            <option value="overdue">Vencidas pendientes</option>
+            <option value="soon">Proximas a vencer</option>
+            <option value="workorders">Ordenes recibidas</option>
+            <option value="workorders-alert">Ordenes con novedades</option>
+          </select>
+        </label>
+
+        <label>
+          Tipo
+          <select id="typeFilter">
+            <option value="all">Todos</option>
+            <option value="personal">Personal</option>
+            <option value="shared">Compartida</option>
+            <option value="permanent">Permanente</option>
+          </select>
+        </label>
+
+        <label>
+          Categoria
+          <select id="categoryFilter">
+            <option value="all">Todas</option>
+          </select>
+        </label>
+
+        <label>
+          Evidencias
+          <select id="mediaFilter">
+            <option value="all">Con o sin evidencias</option>
+            <option value="review">Pendientes de ver/oir/leer</option>
+            <option value="with">Con evidencias</option>
+            <option value="without">Sin evidencias</option>
+          </select>
+        </label>
+
+        <label>
+          Ordenar
+          <select id="sortInput">
+            <option value="reminderAsc">Recordatorio / fecha mas proxima</option>
+            <option value="dueAsc">Vencimiento mas cercano</option>
+            <option value="dueDesc">Vencimiento mas lejano</option>
+            <option value="createdDesc">Alta mas reciente</option>
+            <option value="createdAsc">Alta mas antigua</option>
+            <option value="titleAsc">Titulo A-Z</option>
+            <option value="statusAsc">Estado</option>
+          </select>
+        </label>
+
+        <section class="chart-card" aria-label="Grafica de evolucion">
+          <h3>Evolucion</h3>
+          <div class="bars" id="progressBars"></div>
+        </section>
+
+        <section class="agents-card" aria-label="Agentes">
+          <div class="panel-title">
+            <h3>Agentes</h3>
+            <button class="small-button" id="addAgentButton" type="button">Crear</button>
+          </div>
+          <div class="agent-list" id="agentList"></div>
+        </section>
+
+        <section class="agents-card" aria-label="Invitados">
+          <div class="panel-title">
+            <h3>Invitados</h3>
+            <button class="small-button" id="addGuestButton" type="button">Crear</button>
+          </div>
+          <div class="agent-list" id="guestList"></div>
+        </section>
+
+        <section class="agents-card contracts-control" aria-label="Contratos">
+          <div class="panel-title">
+            <h3>Contratos</h3>
+            <span class="mini-count" id="contractCount">0</span>
+          </div>
+          <label>
+            Buscar
+            <input id="contractSearchInput" type="search" placeholder="Contrato, tarea o archivo">
+          </label>
+          <label>
+            Agente
+            <select id="contractAgentFilter"></select>
+          </label>
+          <label>
+            Estado
+            <select id="contractStatusFilter">
+              <option value="all">Todos</option>
+              <option value="draft">Borradores</option>
+              <option value="sent">Enviados</option>
+              <option value="opened">Abiertos</option>
+              <option value="change_requested">Cambios solicitados</option>
+              <option value="unlocked">Desbloqueados</option>
+              <option value="signed">Firmados</option>
+            </select>
+          </label>
+          <label>
+            Ordenar
+            <select id="contractSortFilter">
+              <option value="updatedDesc">Fecha reciente</option>
+              <option value="updatedAsc">Fecha antigua</option>
+              <option value="agentAsc">Agente A-Z</option>
+              <option value="statusAsc">Estado</option>
+              <option value="versionDesc">Version mayor</option>
+            </select>
+          </label>
+          <div class="contract-mini-list" id="contractList"></div>
+        </section>
+      </aside>
+
+      <section class="task-panel">
+        <div class="task-toolbar">
+          <div>
+            <p class="eyebrow">Listado</p>
+            <h2 id="resultTitle">Tareas pendientes</h2>
+          </div>
+          <p id="resultCount">0 resultados</p>
+        </div>
+        <section class="gallery-panel hidden" id="galleryPanel" aria-label="Listado de evidencias">
+          <div class="gallery-toolbar">
+            <label>
+              Buscar evidencias por tarea/subtarea
+              <input id="photoSearchInput" type="search" placeholder="Ej. servidor, pintura, Pablo">
+            </label>
+            <button class="small-button" id="closeGalleryButton" type="button">Volver a tareas</button>
+          </div>
+          <div class="gallery-grid" id="galleryGrid"></div>
+        </section>
+        <section class="gallery-panel hidden" id="alarmsPanel" aria-label="Listado de alarmas">
+          <div class="gallery-toolbar">
+            <div>
+              <p class="eyebrow">Proximos 10 dias</p>
+              <h2>Alarmas</h2>
+            </div>
+            <button class="small-button" id="closeAlarmsButton" type="button">Volver a tareas</button>
+          </div>
+          <div class="alarm-list" id="alarmList"></div>
+        </section>
+        <div class="task-list" id="taskList"></div>
+      </section>
+
+      <aside class="detail-panel" id="detailPanel">
+        <div class="empty-detail">
+          <h2>Selecciona una tarea</h2>
+          <p>Veras detalle, agentes, evidencias, mensajes y progreso.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="company-footer">
+    <span>NICOPASUX SL - CIF: B57097917 - <a href="https://www.negotecnica.com">www.negotecnica.com</a></span>
+    <button class="footer-share-button" id="openShareInfoButton" type="button" aria-label="Informacion y compartir TRACKION AGENDA">i</button>
+    <button class="footer-share-button" id="openOwnerStatsButton" type="button" aria-label="Estadisticas de difusion TRACKION AGENDA">S</button>
+  </footer>
+
+  <dialog class="task-dialog share-dialog" id="shareInfoDialog">
+    <div class="share-content">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Compartir</p>
+          <h2>TRACKION AGENDA</h2>
+        </div>
+        <button class="square-button" id="closeShareInfoButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <p>
+        TRACKION AGENDA es una agenda profesional para organizar tareas personales y trabajos compartidos,
+        asignar subtareas a agentes, invitar visualizadores, registrar avances, fotos, incidencias, fechas,
+        GPS y evidencias de ejecucion.
+      </p>
+      <p>
+        Permite controlar lo pendiente, vencido, terminado o en curso desde el PC y desde el movil. Cuando se
+        active la nube, la informacion podra sincronizarse entre dispositivos y usuarios autorizados.
+      </p>
+      <p>
+        Comparte este enlace para que otra persona pueda abrir la aplicacion en plataforma web o instalarla como
+        app en su movil compatible.
+      </p>
+
+      <div class="share-actions">
+        <button class="primary-button" id="shareWhatsappButton" type="button">Enviar por WhatsApp</button>
+        <button class="ghost-button" id="shareSmsButton" type="button">Enviar por SMS</button>
+        <button class="ghost-button" id="shareEmailButton" type="button">Enviar por email</button>
+      </div>
+      <p class="share-note" id="shareStatus"></p>
+    </div>
+  </dialog>
+
+  <dialog class="task-dialog share-dialog" id="ownerStatsDialog">
+    <div class="share-content">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Propietario</p>
+          <h2>Estadisticas TRACKION</h2>
+        </div>
+        <button class="square-button" id="closeOwnerStatsButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <p>
+        Este panel resume difusion, uso e instalacion. En local muestra datos de este navegador.
+        Cuando activemos nube, estos indicadores se consolidaran por usuarios, dispositivos, invitaciones y actividad global.
+      </p>
+
+      <section class="owner-metrics" id="ownerMetrics"></section>
+
+      <section class="section-block">
+        <h3>Metricas futuras en nube</h3>
+        <p class="task-meta">
+          agendas instaladas, usuarios registrados, dispositivos activos, usuarios diarios/mensuales, tareas creadas,
+          invitaciones enviadas/aceptadas, agentes activos, invitados activos, fotos subidas, tareas concluidas,
+          retencion de uso y origen de altas por enlace compartido.
+        </p>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog class="task-dialog" id="taskDialog">
+    <form id="taskForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Registro</p>
+          <h2 id="dialogTitle">Nueva tarea</h2>
+        </div>
+        <button class="square-button" id="closeDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Titulo
+        <input id="titleInput" type="text" maxlength="120" required placeholder="Ej. Pintar casa en Calle Legazpi">
+      </label>
+
+      <div class="form-grid">
+        <label>
+          Tipo
+          <select id="typeInput">
+            <option value="personal">Personal</option>
+            <option value="shared">Compartida con agentes</option>
+            <option value="permanent">Permanente</option>
+          </select>
+        </label>
+        <label>
+          Estado
+          <select id="statusInput">
+            <option value="new">Nueva</option>
+            <option value="active">Comenzada</option>
+            <option value="paused">Pausa / no continuar</option>
+            <option value="done">Terminada</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Fecha prevista
+          <input id="dueInput" type="date">
+        </label>
+        <label>
+          Recordatorio
+          <input id="reminderInput" type="datetime-local">
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          Categoria
+          <select id="categoryInput"></select>
+        </label>
+        <label>
+          Prioridad
+          <select id="priorityInput">
+            <option value="baja">Baja</option>
+            <option value="media" selected>Media</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Palabras clave
+        <input id="keywordsInput" type="text" placeholder="obra, cliente, urgente">
+      </label>
+
+      <label>
+        Agentes asignados
+        <input id="agentsInput" type="text" placeholder="Pablo, Marcos, Carlos">
+      </label>
+
+      <label>
+        Seleccionar agente del directorio
+        <select id="agentSelectInput"></select>
+      </label>
+
+      <label>
+        Visualizadores
+        <input id="viewersInput" type="text" placeholder="Direccion, cliente, supervisor">
+      </label>
+
+      <label>
+        Seleccionar invitado del directorio
+        <select id="viewerSelectInput"></select>
+      </label>
+
+      <label>
+        Descripcion / instrucciones
+        <textarea id="descriptionInput" rows="5" maxlength="1200" placeholder="Texto libre, instrucciones, incidencias o contexto"></textarea>
+      </label>
+
+      <label>
+        Avance de 0 a 10
+        <input id="progressInput" type="range" min="0" max="10" value="0">
+      </label>
+
+      <label>
+        Foto, video o audio
+        <input id="photoInput" type="file" accept="image/*,video/*,audio/*" multiple>
+      </label>
+
+      <div class="form-grid">
+        <label>
+          Modo de carga
+          <div class="source-toggle" role="group" aria-label="Modo de carga de evidencias">
+            <button class="small-button active" id="sourceDeviceButton" type="button">Del dispositivo</button>
+            <button class="small-button" id="sourceCameraButton" type="button">Camara</button>
+            <button class="small-button" id="sourceMicButton" type="button">Microfono</button>
+          </div>
+          <select class="hidden" id="photoSourceInput" aria-hidden="true" tabindex="-1">
+            <option value="library">Del dispositivo</option>
+            <option value="app">Camara</option>
+            <option value="microphone">Microfono</option>
+          </select>
+        </label>
+        <label>
+          GPS manual
+          <input id="gpsInput" type="text" placeholder="28.1234, -16.1234">
+        </label>
+      </div>
+
+      <label>
+        Archivos relacionados (documentos y otros)
+        <input id="filesInput" type="file" multiple>
+      </label>
+
+      <p class="form-note" id="attachmentStatus"></p>
+      <p class="form-note">Del dispositivo selecciona fotos, videos o audios existentes. Camara abre la captura de foto/video y las fotos se guardan con sello visible de fecha, hora y GPS. Microfono graba solo audio. Archivos relacionados queda reservado para PDF, DOC, PSD, CDR, XML, TXT, EXE y otros documentos.</p>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="cancelButton" type="button">Cancelar</button>
+        <button class="primary-button" id="submitTaskButton" type="submit">Guardar tarea</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="task-dialog compact-dialog" id="configDialog">
+    <form id="configForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">CONFIG</p>
+          <h2>Agenda y almacenamiento</h2>
+        </div>
+        <button class="square-button" id="closeConfigDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Movil del propietario
+        <input id="ownerPhoneInput" type="tel" maxlength="30" placeholder="Ej. 34600111222">
+      </label>
+
+      <label>
+        Almacenamiento preferido
+        <select id="storagePreferenceInput">
+          <option value="local">Local / prototipo</option>
+          <option value="firebase">Firebase + Storage por usuario</option>
+          <option value="drive">Google Drive del propietario</option>
+        </select>
+      </label>
+
+      <label class="checkbox-row">
+        <input id="autoWhatsappInput" type="checkbox">
+        Activar avisos automaticos 48h/24h cuando exista backend WhatsApp
+      </label>
+
+      <section class="storage-advice">
+        <strong>Avisos WhatsApp 48h/24h</strong>
+        <p id="whatsappReminderStatus">Calculando avisos pendientes...</p>
+        <p id="whatsappEndpointStatus">Endpoint no configurado: se mostrara la cola de avisos, pero no se enviaran automaticamente.</p>
+      </section>
+
+      <section class="storage-advice">
+        <strong>Recomendacion tecnica</strong>
+        <p>Para produccion conviene guardar fotos, videos y archivos en una nube por usuario. Google Drive del propietario es buena opcion si cada agenda controla sus evidencias; Firebase Storage facilita permisos, sincronizacion movil/PC y auditoria por tarea.</p>
+        <p>El envio automatico de WhatsApp necesita servidor y WhatsApp Business API. El navegador solo puede abrir WhatsApp con accion del usuario.</p>
+      </section>
+
+      <section class="storage-advice">
+        <strong>Respaldo local</strong>
+        <p id="localStorageStatus">Calculando uso local...</p>
+        <div class="config-actions">
+          <button class="small-button" id="exportDataButton" type="button">Exportar datos</button>
+          <button class="small-button" id="importDataButton" type="button">Importar datos</button>
+          <input class="hidden" id="importDataInput" type="file" accept="application/json">
+        </div>
+      </section>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="cancelConfigButton" type="button">Cancelar</button>
+        <button class="primary-button" type="submit">Guardar CONFIG</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="task-dialog compact-dialog" id="authDialog">
+    <form id="authForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Cuenta TRACKION</p>
+          <h2>Acceso a la agenda</h2>
+        </div>
+        <button class="square-button" id="closeAuthDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Email
+        <input id="authEmailInput" type="email" autocomplete="email" required placeholder="tu@email.com">
+      </label>
+
+      <label>
+        Contrasena
+        <span class="password-field">
+          <input id="authPasswordInput" type="password" autocomplete="current-password" minlength="6" placeholder="Minimo 6 caracteres">
+          <button class="password-toggle" id="togglePasswordButton" type="button" aria-label="Ver contrasena" title="Ver contrasena">Ver</button>
+        </span>
+      </label>
+
+      <label>
+        Accion
+        <select id="authModeInput">
+          <option value="login">Entrar</option>
+          <option value="register">Crear cuenta</option>
+        </select>
+      </label>
+
+      <p class="form-note" id="authStatus"></p>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="resetPasswordButton" type="button">Recuperar contrasena</button>
+        <button class="primary-button" type="submit">Continuar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="task-dialog share-dialog" id="inboxDialog">
+    <div class="share-content">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Firebase</p>
+          <h2>Invitaciones recibidas</h2>
+        </div>
+        <button class="square-button" id="closeInboxDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <p class="task-meta" id="inboxStatus">Las tareas y visualizaciones enviadas por otros usuarios apareceran aqui.</p>
+      <div class="invitation-list" id="invitationList"></div>
+    </div>
+  </dialog>
+
+  <dialog class="task-dialog compact-dialog" id="guestDialog">
+    <form id="guestForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Invitado</p>
+          <h2 id="guestDialogTitle">Nuevo invitado</h2>
+        </div>
+        <button class="square-button" id="closeGuestDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Nombre
+        <input id="guestNameInput" type="text" maxlength="80" required placeholder="Ej. Cliente obra">
+      </label>
+
+      <label>
+        Telefono WhatsApp
+        <input id="guestPhoneInput" type="tel" maxlength="30" placeholder="Ej. 34600999888">
+      </label>
+
+      <label>
+        Email
+        <input id="guestEmailInput" type="email" maxlength="120" placeholder="invitado@empresa.com">
+      </label>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="cancelGuestButton" type="button">Cancelar</button>
+        <button class="primary-button" type="submit">Guardar invitado</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="task-dialog compact-dialog" id="permissionDialog">
+    <form id="permissionForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Visualizacion</p>
+          <h2 id="permissionDialogTitle">Dar permiso</h2>
+        </div>
+        <button class="square-button" id="closePermissionDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Invitado
+        <select id="permissionGuestInput"></select>
+      </label>
+
+      <label>
+        Alcance
+        <select id="permissionScopeInput">
+          <option value="task">Tarea completa</option>
+          <option value="subtask">Subtarea concreta</option>
+        </select>
+      </label>
+
+      <label>
+        Subtarea
+        <select id="permissionSubtaskInput"></select>
+      </label>
+
+      <label>
+        Estado inicial
+        <select id="permissionStatusInput">
+          <option value="pending">Pendiente</option>
+          <option value="accepted">Puede ver</option>
+          <option value="suspended">En pausa</option>
+        </select>
+      </label>
+
+      <p class="form-note" id="permissionStatusNote"></p>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="cancelPermissionButton" type="button">Cancelar</button>
+        <button class="primary-button" type="submit">Guardar permiso</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="task-dialog compact-dialog" id="agentDialog">
+    <form id="agentForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Agente</p>
+          <h2 id="agentDialogTitle">Nuevo agente</h2>
+        </div>
+        <button class="square-button" id="closeAgentDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Nombre
+        <input id="agentNameInput" type="text" maxlength="80" required placeholder="Ej. Pablo Hernandez">
+      </label>
+
+      <label>
+        Telefono WhatsApp
+        <input id="agentPhoneInput" type="tel" maxlength="30" placeholder="Ej. 34600111222">
+      </label>
+
+      <label>
+        Email
+        <input id="agentEmailInput" type="email" maxlength="120" placeholder="agente@empresa.com">
+      </label>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="cancelAgentButton" type="button">Cancelar</button>
+        <button class="primary-button" type="submit">Guardar agente</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="task-dialog compact-dialog" id="contractDialog">
+    <form id="contractForm" method="dialog">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">Contratacion</p>
+          <h2 id="contractDialogTitle">Nuevo contrato</h2>
+        </div>
+        <button class="square-button" id="closeContractDialogButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+
+      <label>
+        Titulo del contrato
+        <input id="contractTitleInput" type="text" maxlength="120" required placeholder="Ej. Contrato de reforma fase 1">
+      </label>
+
+      <label>
+        Agente firmante
+        <select id="contractRecipientInput" required></select>
+      </label>
+
+      <label>
+        Documento a firmar
+        <input id="contractFileInput" type="file" accept=".pdf,.doc,.docx,.odt,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" required>
+      </label>
+
+      <label>
+        Nota interna
+        <textarea id="contractNoteInput" rows="3" maxlength="500" placeholder="Indicaciones, version o condicion especial"></textarea>
+      </label>
+
+      <p class="form-note" id="contractStatusNote">Modulo preparado. La firma certificada se activara al conectar un proveedor eIDAS/API.</p>
+
+      <div class="dialog-actions">
+        <button class="ghost-button" id="cancelContractButton" type="button">Cancelar</button>
+        <button class="primary-button" type="submit">Guardar contrato</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="media-viewer-dialog" id="mediaViewerDialog">
+    <div class="media-viewer-shell">
+      <div class="media-viewer-topbar">
+        <div>
+          <p class="eyebrow" id="mediaViewerScope">Evidencia</p>
+          <h2 id="mediaViewerTitle">Galeria</h2>
+        </div>
+        <button class="square-button" id="closeMediaViewerButton" type="button" aria-label="Cerrar">x</button>
+      </div>
+      <div class="media-viewer-stage" id="mediaViewerStage"></div>
+      <div class="media-viewer-footer">
+        <button class="ghost-button" id="prevMediaButton" type="button">Anterior</button>
+        <p class="task-meta" id="mediaViewerMeta"></p>
+        <button class="ghost-button" id="nextMediaButton" type="button">Siguiente</button>
+      </div>
+    </div>
+  </dialog>
+
+  <template id="taskCardTemplate">
+    <article class="task-card">
+      <button class="status-dot" type="button"></button>
+      <div class="task-card-body">
+        <div class="task-line">
+          <h3></h3>
+          <span class="priority-pill"></span>
+        </div>
+        <p class="task-meta"></p>
+        <div class="tag-row"></div>
+      </div>
+      <div class="progress-mini"><span></span></div>
+    </article>
+  </template>
+
+  <script src="config.js?v=63"></script>
+  <script src="data-store.js?v=63"></script>
+  <script src="register-sw.js?v=63"></script>
+  <script src="app.js?v=63"></script>
+</body>
+</html>
